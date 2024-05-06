@@ -1,0 +1,20 @@
+# Ignore build directories
+build/
+dist/
+nbbuild/
+nbdist/
+nbproject/private/
+nbproject/build-impl.xml
+
+# Ignore NetBeans metadata
+nbproject/README.TXT
+nbproject/genfiles.properties
+nbproject/project.properties
+nbproject/configs/
+nbproject/ant-deploy.xml
+nbproject/private/
+nbproject/nb-build.xml
+nbproject/nb-configuration.xml
+
+# Ignore libraries and dependencies
+lib/
