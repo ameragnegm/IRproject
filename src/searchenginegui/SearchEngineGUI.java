@@ -29,7 +29,7 @@ public class SearchEngineGUI extends JFrame implements ActionListener {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         tokenizeCheckbox = new JCheckBox("Tokenization");
-        stopWordsCheckbox = new JCheckBox("Stop Words ");
+        stopWordsCheckbox = new JCheckBox("Stop Words");
         lemmatizeCheckbox = new JCheckBox("Lemmatization");
         stemCheckbox = new JCheckBox("Stemming");
         normalizeCheckbox = new JCheckBox("Normalization");
@@ -64,133 +64,130 @@ public class SearchEngineGUI extends JFrame implements ActionListener {
 
         setVisible(true);
     }
+     // Initialize indexingResults here
     private String selectedPreprocessingOptions; // Store selected preprocessing options
     private String selectedIndexType;
+    private StringBuilder indexingResults = new StringBuilder();
+  @Override
+public void actionPerformed(ActionEvent e) {
+      List<String> documents = readDataset("dataset");
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == indexButton) {
-            clearOutput(); // Clear the text area 
-
-            List<String> documents = readDataset("dataset");
-
-            List<List<String>> tokenizedDocuments = new ArrayList<>();
-            for (String document : documents) {
-                List<String> tokens = Tokenization.tokenizeDocument(document);
-                tokenizedDocuments.add(tokens);
-            }
-
-            if (tokenizeCheckbox.isSelected()) {
-                outputTextArea.append("Tokenization Results:\n");
-                outputTextArea.append(tokenizedDocuments.toString() + "\n\n");
-            }
-
-            if (stopWordsCheckbox.isSelected()) {
-                List<List<String>> cleanedDocuments = Stopwords.removeStopWords(tokenizedDocuments);
-                outputTextArea.append("Stop Words  Results:\n");
-                outputTextArea.append(cleanedDocuments.toString() + "\n\n");
-            }
-
-            if (lemmatizeCheckbox.isSelected()) {
-                List<List<String>> lemmatizedDocuments = Lemmatization.lemmatizeDataset(tokenizedDocuments);
-                outputTextArea.append("Lemmatization Results:\n");
-                outputTextArea.append(lemmatizedDocuments.toString() + "\n\n");
-            }
-
-            if (stemCheckbox.isSelected()) {
-                List<List<String>> stemmedDocuments = Stemming.stemDataset(tokenizedDocuments);
-                outputTextArea.append("Stemming Results:\n");
-                outputTextArea.append(stemmedDocuments.toString() + "\n\n");
-            }
-
-            if (normalizeCheckbox.isSelected()) {
-                List<List<String>> normalizedDocuments = Normalization.normalizeDocuments(tokenizedDocuments);
-                outputTextArea.append("Normalization Results:\n");
-                outputTextArea.append(normalizedDocuments.toString() + "\n\n");
-            }
-
-            String indexType = (String) indexTypeComboBox.getSelectedItem();
-            StringBuilder indexingResults = new StringBuilder();
-            switch (indexType) {
-                case "Term Document Incidence Matrix":
-                    TermDocumentMatrixIndexer indexer1 = new TermDocumentMatrixIndexer("dataset");
-                    indexer1.buildIndex();
-                    indexingResults.append("Indexing using Term-Document Matrix...\n");
-                    indexingResults.append(indexer1.getIndex()).append("\n");
-                    break;
-                case "Inverted Index":
-                    InvertedIndexer indexer2 = new InvertedIndexer("dataset");
-                    try {
-                        indexer2.buildIndex();
-                        indexingResults.append("Indexing using Inverted Index...\n");
-                        indexingResults.append(formatIndex(indexer2.getIndex())).append("\n"); 
-                    } catch (IOException ex) {
-                        indexingResults.append("Error indexing using Inverted Index.\n");
-                        ex.printStackTrace();
-                    }
-                    break;
-                case "Positional Index":
-                    PositionalIndexer indexer3 = new PositionalIndexer("dataset");
-                    try {
-                        indexer3.buildIndex();
-                        indexingResults.append("Indexing using Positional Index...\n");
-                        indexingResults.append(indexer3.getIndex()).append("\n");
-                    } catch (IOException ex) {
-                        indexingResults.append("Error indexing using Positional Index.\n");
-                        ex.printStackTrace();
-                    }
-                    break;
-                case "Biword Index":
-                    BiwordIndexer indexer4 = new BiwordIndexer("dataset");
-                    try {
-                        indexer4.buildIndex();
-                        indexingResults.append("Indexing using Biword Index...\n");
-                        indexingResults.append(formatIndexBiword(indexer4.getIndex())).append("\n"); 
-                    } catch (IOException ex) {
-                        indexingResults.append("Error indexing using Biword Index.\n");
-                        ex.printStackTrace();
-                    }
-                    break;
-                default:
-                    indexingResults.append("Invalid index type selected.\n");
-                    break;
-            }
-            selectedPreprocessingOptions = getSelectedPreprocessingOptions();
-            selectedIndexType = (String) indexTypeComboBox.getSelectedItem();
-            outputTextArea.append(indexingResults.toString());
-            outputTextArea.append("Indexing complete! Result displayed.");
-        } else if (e.getSource() == searchPageButton) {
-            Searcher searchPage = new Searcher(this, selectedIndexType, selectedPreprocessingOptions); // Pass selected options to constructor
-            searchPage.setVisible(true);
-            dispose(); 
+        List<List<String>> tokenizedDocuments = new ArrayList<>();
+        for (String document : documents) {
+            List<String> tokens = Tokenization.tokenizeDocument(document);
+            tokenizedDocuments.add(tokens);
         }
-    }
 
-    private String getSelectedPreprocessingOptions() {
-        StringBuilder options = new StringBuilder();
         if (tokenizeCheckbox.isSelected()) {
-            options.append("Tokenization, ");
+            outputTextArea.append("Tokenization Results:\n");
+            outputTextArea.append(tokenizedDocuments.toString() + "\n\n");
+        }
+
+        if (stopWordsCheckbox.isSelected()) {
+            List<List<String>> cleanedDocuments = Stopwords.removeStopWordsFromDocuments(tokenizedDocuments);
+            outputTextArea.append("Stop Words  Results:\n");
+            outputTextArea.append(cleanedDocuments.toString() + "\n\n");
+        }
+
+        if (lemmatizeCheckbox.isSelected()) {
+            List<List<String>> lemmatizedDocuments = Lemmatization.lemmatizeDocuments(tokenizedDocuments);
+            outputTextArea.append("Lemmatization Results:\n");
+            outputTextArea.append(lemmatizedDocuments.toString() + "\n\n");
+        }
+
+        if (stemCheckbox.isSelected()) {
+            List<List<String>> stemmedDocuments = Stemming.stemDocuments(tokenizedDocuments);
+            outputTextArea.append("Stemming Results:\n");
+            outputTextArea.append(stemmedDocuments.toString() + "\n\n");
+        }
+
+        if (normalizeCheckbox.isSelected()) {
+            List<List<String>> normalizedDocuments = Normalization.normalizeDocuments(tokenizedDocuments);
+            outputTextArea.append("Normalization Results:\n");
+            outputTextArea.append(normalizedDocuments.toString() + "\n\n");
+        }
+
+        String indexType = (String) indexTypeComboBox.getSelectedItem();
+        indexingResults = new StringBuilder(); // Initialize indexingResults
+        switch (indexType) {
+            case "Term Document Incidence Matrix":
+                TermDocumentMatrixIndexer indexer1 = new TermDocumentMatrixIndexer("dataset");
+                indexer1.buildIndex();
+                indexingResults.append("Indexing using Term-Document Matrix...\n");
+                indexingResults.append(indexer1.getIndex()).append("\n");
+                break;
+            case "Inverted Index":
+                InvertedIndexer indexer2 = new InvertedIndexer("dataset");
+                try {
+                    indexer2.buildIndex();
+                    indexingResults.append("Indexing using Inverted Index...\n");
+                    indexingResults.append(formatIndex(indexer2.getIndex())).append("\n");
+                } catch (IOException ex) {
+                    indexingResults.append("Error indexing using Inverted Index.\n");
+                    ex.printStackTrace();
+                }
+                break;
+            case "Positional Index":
+                PositionalIndexer indexer3 = new PositionalIndexer("dataset");
+                try {
+                    indexer3.buildIndex();
+                    indexingResults.append("Indexing using Positional Index...\n");
+                    indexingResults.append(indexer3.getIndex()).append("\n");
+                } catch (IOException ex) {
+                    indexingResults.append("Error indexing using Positional Index.\n");
+                    ex.printStackTrace();
+                }
+                break;
+            case "Biword Index":
+                BiwordIndexer indexer4 = new BiwordIndexer("dataset");
+                try {
+                    indexer4.buildIndex();
+                    indexingResults.append("Indexing using Biword Index...\n");
+                    indexingResults.append(formatIndexBiword(indexer4.getIndex())).append("\n");
+                } catch (IOException ex) {
+                    indexingResults.append("Error indexing using Biword Index.\n");
+                    ex.printStackTrace();
+                }
+                break;
+            default:
+                indexingResults.append("Invalid index type selected.\n");
+                break;
+        }
+    if (e.getSource() == indexButton) {
+        clearOutput(); // Clear the text area 
+        outputTextArea.append(indexingResults.toString());
+        outputTextArea.append("Indexing complete! Result displayed.");
+    } else if (e.getSource() == searchPageButton) {
+        List<String> selectedPreprocessingOptions = getSelectedPreprocessingOptions();
+        selectedIndexType = (String) indexTypeComboBox.getSelectedItem();
+        Searcher searchPage = new Searcher(this, selectedIndexType, selectedPreprocessingOptions, indexingResults.toString()); // Pass indexingResults to constructor
+        searchPage.setVisible(true);
+        dispose();
+    }
+}
+
+    private List<String> getSelectedPreprocessingOptions() {
+        List<String> optionsList = new ArrayList<>();
+        if (tokenizeCheckbox.isSelected()) {
+            optionsList.add("Tokenization");
         }
         if (stopWordsCheckbox.isSelected()) {
-            options.append("Stop Words, ");
+            optionsList.add("Stop Words");
         }
         if (lemmatizeCheckbox.isSelected()) {
-            options.append("Lemmatization, ");
+            optionsList.add("Lemmatization");
         }
         if (stemCheckbox.isSelected()) {
-            options.append("Stemming, ");
+            optionsList.add("Stemming");
         }
         if (normalizeCheckbox.isSelected()) {
-            options.append("Normalization, ");
+            optionsList.add("Normalization");
         }
-        if (options.length() > 0) {
-            options.delete(options.length() - 2, options.length()); // Remove the last comma and space
-        }
-        return options.toString();
+        return optionsList;
     }
 
     private void clearOutput() {
-        outputTextArea.setText(""); 
+        outputTextArea.setText("");
     }
 
     private String formatIndex(Map<String, String[]> index) {

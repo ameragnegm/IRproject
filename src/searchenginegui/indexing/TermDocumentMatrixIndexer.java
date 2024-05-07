@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TermDocumentMatrixIndexer {
@@ -16,6 +18,15 @@ public class TermDocumentMatrixIndexer {
         this.index = new HashMap<>();
     }
 
+    public List<String> searchInTermDocumentIndex(List<String> tokens) {
+        List<String> searchResults = new ArrayList<>();
+        for (String token : tokens) {
+            if (index.containsKey(token)) {
+                searchResults.add(token);
+            }
+        }
+        return searchResults;
+    }
 public void buildIndex() {
     File folder = new File(datasetFolder);
     File[] files = folder.listFiles();

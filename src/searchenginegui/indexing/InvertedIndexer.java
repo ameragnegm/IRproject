@@ -1,11 +1,17 @@
-package searchenginegui.indexing;import java.io.File;
+package searchenginegui.indexing;
+
+import java.io.File;
 import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class InvertedIndexer {
+
     private String datasetFolder;
     private Map<String, String[]> index;
 
@@ -14,10 +20,20 @@ public class InvertedIndexer {
         this.index = new HashMap<>();
     }
 
+    public List<String> searchInInvertedIndex(List<String> tokens) {
+        List<String> searchResults = new ArrayList<>();
+        for (String token : tokens) {
+            if (index.containsKey(token)) {
+                searchResults.addAll(Arrays.asList(index.get(token)));
+            }
+        }
+        return searchResults;
+    }
+
     public void buildIndex() throws IOException {
         File folder = new File(datasetFolder);
         File[] files = folder.listFiles();
-        
+
         for (File file : files) {
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line;
@@ -54,4 +70,3 @@ public class InvertedIndexer {
         return index;
     }
 }
-

@@ -13,7 +13,7 @@ public class Tokenization {
         return tokens;
     }
 
-    public static List<List<String>> tokenizeDataset(List<String> documents) {
+    public static List<List<String>> tokenizeDocuments(List<String> documents) {
         List<List<String>> tokenizedDocuments = new ArrayList<>();
         for (String document : documents) {
             List<String> tokens = tokenizeDocument(document);

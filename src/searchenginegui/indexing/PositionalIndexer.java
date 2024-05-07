@@ -1,12 +1,16 @@
 package searchenginegui.indexing;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PositionalIndexer {
+
     private String datasetFolder;
     private Map<String, Map<String, Integer>> index;
 
@@ -15,10 +19,20 @@ public class PositionalIndexer {
         this.index = new HashMap<>();
     }
 
+    public List<String> searchInPositionalIndex(List<String> tokens) {
+        List<String> searchResults = new ArrayList<>();
+        for (String token : tokens) {
+            if (index.containsKey(token)) {
+                searchResults.add(token);
+            }
+        }
+        return searchResults;
+    }
+
     public void buildIndex() throws IOException {
         File folder = new File(datasetFolder);
         File[] files = folder.listFiles();
-        
+
         for (File file : files) {
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line;
