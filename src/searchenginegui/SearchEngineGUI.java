@@ -64,48 +64,46 @@ public class SearchEngineGUI extends JFrame implements ActionListener {
 
         setVisible(true);
     }
-     // Initialize indexingResults here
+    // Initialize indexingResults here
     private String selectedPreprocessingOptions; // Store selected preprocessing options
     private String selectedIndexType;
     private StringBuilder indexingResults = new StringBuilder();
-  @Override
-public void actionPerformed(ActionEvent e) {
-      List<String> documents = readDataset("dataset");
 
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        List<String> documents = readDataset("dataset");
         List<List<String>> tokenizedDocuments = new ArrayList<>();
         for (String document : documents) {
             List<String> tokens = Tokenization.tokenizeDocument(document);
             tokenizedDocuments.add(tokens);
         }
 
-        if (tokenizeCheckbox.isSelected()) {
-            outputTextArea.append("Tokenization Results:\n");
-            outputTextArea.append(tokenizedDocuments.toString() + "\n\n");
-        }
+       List<List<String>> processedDocuments = new ArrayList<>(tokenizedDocuments); // Initialize with tokenized documents
+
+        StringBuilder outputBuilder = new StringBuilder();
+        outputBuilder.append("Preprocessing Results:\n");
 
         if (stopWordsCheckbox.isSelected()) {
-            List<List<String>> cleanedDocuments = Stopwords.removeStopWordsFromDocuments(tokenizedDocuments);
-            outputTextArea.append("Stop Words  Results:\n");
-            outputTextArea.append(cleanedDocuments.toString() + "\n\n");
+            List<List<String>> cleanedDocuments = Stopwords.removeStopWordsFromDocuments(processedDocuments);
+            processedDocuments = new ArrayList<>(cleanedDocuments); // Assign the processed documents
         }
 
         if (lemmatizeCheckbox.isSelected()) {
-            List<List<String>> lemmatizedDocuments = Lemmatization.lemmatizeDocuments(tokenizedDocuments);
-            outputTextArea.append("Lemmatization Results:\n");
-            outputTextArea.append(lemmatizedDocuments.toString() + "\n\n");
+            List<List<String>> lemmatizedDocuments = Lemmatization.lemmatizeDocuments(processedDocuments);
+            processedDocuments = new ArrayList<>(lemmatizedDocuments); // Assign the processed documents
         }
 
         if (stemCheckbox.isSelected()) {
-            List<List<String>> stemmedDocuments = Stemming.stemDocuments(tokenizedDocuments);
-            outputTextArea.append("Stemming Results:\n");
-            outputTextArea.append(stemmedDocuments.toString() + "\n\n");
+            List<List<String>> stemmedDocuments = Stemming.stemDocuments(processedDocuments);
+            processedDocuments = new ArrayList<>(stemmedDocuments); // Assign the processed documents
         }
 
         if (normalizeCheckbox.isSelected()) {
-            List<List<String>> normalizedDocuments = Normalization.normalizeDocuments(tokenizedDocuments);
-            outputTextArea.append("Normalization Results:\n");
-            outputTextArea.append(normalizedDocuments.toString() + "\n\n");
+            List<List<String>> normalizedDocuments = Normalization.normalizeDocuments(processedDocuments);
+
+            processedDocuments = new ArrayList<>(normalizedDocuments); // Assign the processed documents
         }
+        outputBuilder.append(processedDocuments.toString()).append("\n\n");
 
         String indexType = (String) indexTypeComboBox.getSelectedItem();
         indexingResults = new StringBuilder(); // Initialize indexingResults
@@ -139,7 +137,7 @@ public void actionPerformed(ActionEvent e) {
                 }
                 break;
             case "Biword Index":
-                BiwordIndexer indexer4 = new BiwordIndexer("dataset");
+                BiwordIndexer indexer4 = new BiwordIndexer("dataset", processedDocuments);
                 try {
                     indexer4.buildIndex();
                     indexingResults.append("Indexing using Biword Index...\n");
@@ -153,18 +151,22 @@ public void actionPerformed(ActionEvent e) {
                 indexingResults.append("Invalid index type selected.\n");
                 break;
         }
-    if (e.getSource() == indexButton) {
-        clearOutput(); // Clear the text area 
-        outputTextArea.append(indexingResults.toString());
-        outputTextArea.append("Indexing complete! Result displayed.");
-    } else if (e.getSource() == searchPageButton) {
-        List<String> selectedPreprocessingOptions = getSelectedPreprocessingOptions();
-        selectedIndexType = (String) indexTypeComboBox.getSelectedItem();
-        Searcher searchPage = new Searcher(this, selectedIndexType, selectedPreprocessingOptions, indexingResults.toString()); // Pass indexingResults to constructor
-        searchPage.setVisible(true);
-        dispose();
+        if (e.getSource() == indexButton) {
+            clearOutput(); // Clear the text area 
+
+            outputTextArea.append("Preprocessing Results:\n");
+            outputTextArea.setText(outputBuilder.toString());
+            System.out.println(processedDocuments);
+            outputTextArea.append(indexingResults.toString());
+            outputTextArea.append("Indexing complete! Result displayed.");
+        } else if (e.getSource() == searchPageButton) {
+            List<String> selectedPreprocessingOptions = getSelectedPreprocessingOptions();
+            selectedIndexType = (String) indexTypeComboBox.getSelectedItem();
+            Searcher searchPage = new Searcher(this, selectedIndexType, selectedPreprocessingOptions, indexingResults, processedDocuments);
+            searchPage.setVisible(true);
+            dispose();
+        }
     }
-}
 
     private List<String> getSelectedPreprocessingOptions() {
         List<String> optionsList = new ArrayList<>();

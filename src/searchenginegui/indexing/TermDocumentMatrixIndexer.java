@@ -12,12 +12,16 @@ import java.util.Map;
 public class TermDocumentMatrixIndexer {
     private String datasetFolder;
     private Map<String, Map<String, Integer>> index;
-
+    private List<List<String>> processedDocuments;
     public TermDocumentMatrixIndexer(String datasetFolder) {
         this.datasetFolder = datasetFolder;
         this.index = new HashMap<>();
     }
-
+public TermDocumentMatrixIndexer(String datasetFolder, List<List<String>> processedDocuments) {
+        this.datasetFolder = datasetFolder;
+        this.index = new HashMap<>();
+    this.processedDocuments = processedDocuments;
+    }
     public List<String> searchInTermDocumentIndex(List<String> tokens) {
         List<String> searchResults = new ArrayList<>();
         for (String token : tokens) {

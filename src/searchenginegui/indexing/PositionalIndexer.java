@@ -13,10 +13,18 @@ public class PositionalIndexer {
 
     private String datasetFolder;
     private Map<String, Map<String, Integer>> index;
+    private List<List<String>> processedDocuments;
 
     public PositionalIndexer(String datasetFolder) {
         this.datasetFolder = datasetFolder;
         this.index = new HashMap<>();
+    }
+
+    public PositionalIndexer(String datasetFolder, List<List<String>> processedDocuments) {
+        this.datasetFolder = datasetFolder;
+        this.index = new HashMap<>();
+        this.processedDocuments = processedDocuments;
+
     }
 
     public List<String> searchInPositionalIndex(List<String> tokens) {

@@ -1,6 +1,7 @@
 package searchenginegui;
 
 import searchenginegui.indexing.*;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -20,7 +21,10 @@ public class Searcher extends JFrame implements ActionListener {
     private String selectedIndexType;
     private List<String> selectedPreprocessingOptions;
 
-    public Searcher(SearchEngineGUI mainPage, String selectedIndexType, List<String> selectedPreprocessingOptions, String indexingResults) {
+    public Searcher(SearchEngineGUI mainPage, String selectedIndexType, List<String> selectedPreprocessingOptions, StringBuilder indexingResults, List<List<String>> processedDocuments) {
+        System.err.println(indexingResults);
+        System.err.println(processedDocuments);
+
         this.mainPage = mainPage;
         this.selectedIndexType = selectedIndexType;
         this.selectedPreprocessingOptions = selectedPreprocessingOptions;
@@ -60,14 +64,15 @@ public class Searcher extends JFrame implements ActionListener {
             mainPage.setVisible(true);
             dispose();
         }
+
     }
 
     private void performSearch(String indexType, List<String> preprocessingOptions) {
-        String searchPhrase = searchField.getText().trim().toLowerCase();
+        String searchPhrase = searchField.getText().trim().toLowerCase(); // Convert search phrase to lowercase
         StringBuilder searchResults = new StringBuilder();
 
         // Tokenization
-        List<String> tokensAfterTokenization = Tokenization.tokenizeDocument(searchPhrase);
+        List<String> tokensAfterTokenization = Arrays.asList(searchPhrase.toLowerCase().split("\\s+"));
         searchResults.append("Preprocessing Phase: Tokenization\n");
         searchResults.append("Tokens after Tokenization: ").append(tokensAfterTokenization).append("\n\n");
 
@@ -94,35 +99,15 @@ public class Searcher extends JFrame implements ActionListener {
                 }
             }
         }
-// Collect tokens into biwords if the index type is "Biword Index"
-        if (indexType.equalsIgnoreCase("Biword Index")) {
-            List<String> biwordTokens = BiwordIndexer.biwordIndexSearchPhrase(processedTokens);
-            searchResults.append("Biword Tokens: ").append(biwordTokens).append("\n\n");
 
-            // Create an instance of BiwordIndexer
-            BiwordIndexer indexer = new BiwordIndexer("dataset");
-            try {
-                indexer.buildIndex();
+        searchResults.append("Search results for: ").append(tokensAfterTokenization).append("\n");
 
-                // Search in the specified index type and display results using the instance
-                List<String> searchInIndexResults = indexer.searchInBiwordIndex(biwordTokens);
-                searchResults.append(formatSearchResults(searchInIndexResults)).append("\n");
+        // Search in the specified index type and display results
+        List<String> searchInIndexResults = searchInIndex(indexType, tokensAfterTokenization);
+        searchResults.append(formatSearchResults(searchInIndexResults)).append("\n");
 
-                // Set the search results in the text area
-                searchOutputTextArea.setText(searchResults.toString());
-            } catch (IOException e) {
-                e.printStackTrace();
-                // Handle the exception as needed
-            }
-        } else {
-            // Search in other index types
-            List<String> searchInIndexResults = searchInIndex(indexType, processedTokens);
-            searchResults.append("Search results for: ").append(tokensAfterTokenization).append("\n");
-            searchResults.append(formatSearchResults(searchInIndexResults)).append("\n");
-
-            // Set the search results in the text area
-            searchOutputTextArea.setText(searchResults.toString());
-        }
+        // Set the search results in the text area
+        searchOutputTextArea.setText(searchResults.toString());
     }
 
     private List<String> searchInIndex(String indexType, List<String> tokens) {
@@ -147,8 +132,10 @@ public class Searcher extends JFrame implements ActionListener {
         indexer.buildIndex();
         List<String> searchResults = new ArrayList<>();
         for (String token : tokens) {
-            if (indexer.getIndex().containsKey(token)) {
-                searchResults.add(token + ": " + indexer.getIndex().get(token));
+            // Convert the token to lowercase for case-insensitive comparison
+            String lowercaseToken = token.toLowerCase();
+            if (indexer.getIndex().containsKey(lowercaseToken)) {
+                searchResults.add(token + ": " + indexer.getIndex().get(lowercaseToken));
             } else {
                 searchResults.add(token + ": not found");
             }
@@ -163,7 +150,7 @@ public class Searcher extends JFrame implements ActionListener {
             List<String> searchResults = new ArrayList<>();
             for (String token : tokens) {
                 if (indexer.getIndex().containsKey(token)) {
-                    searchResults.add(token + ": " + indexer.getIndex().get(token));
+                    searchResults.add(token + ": " + Arrays.toString(indexer.getIndex().get(token)));
                 } else {
                     searchResults.add(token + ": not found");
                 }
@@ -180,13 +167,22 @@ public class Searcher extends JFrame implements ActionListener {
         try {
             indexer.buildIndex();
             List<String> searchResults = new ArrayList<>();
+
+            // Convert all tokens to lowercase for case-insensitive search
+            List<String> lowercaseTokens = new ArrayList<>();
             for (String token : tokens) {
+                lowercaseTokens.add(token.toLowerCase());
+            }
+
+            // Search for lowercase tokens in the indexer
+            for (String token : lowercaseTokens) {
                 if (indexer.getIndex().containsKey(token)) {
                     searchResults.add(token + ": " + indexer.getIndex().get(token));
                 } else {
                     searchResults.add(token + ": not found");
                 }
             }
+
             return searchResults;
         } catch (IOException e) {
             e.printStackTrace();
@@ -199,13 +195,32 @@ public class Searcher extends JFrame implements ActionListener {
         try {
             indexer.buildIndex();
             List<String> searchResults = new ArrayList<>();
-            for (String token : tokens) {
-                if (indexer.getIndex().containsKey(token)) {
-                    searchResults.add(token + ": " + indexer.getIndex().get(token));
+
+            // Create biwords from tokens
+            List<String> biwords = new ArrayList<>();
+            for (int i = 0; i < tokens.size() - 1; i++) {
+                biwords.add(tokens.get(i) + " " + tokens.get(i + 1));
+            }
+
+            // Search for biwords in the indexer
+            for (String biword : biwords) {
+                if (indexer.getIndex().containsKey(biword)) {
+                    searchResults.add(biword + ": " + Arrays.toString(indexer.getIndex().get(biword)));
                 } else {
-                    searchResults.add(token + ": not found");
+                    searchResults.add(biword + ": not found");
                 }
             }
+
+            // If a single token was provided, find the biword containing that token
+            if (tokens.size() == 1) {
+                String singleToken = tokens.get(0);
+                for (String biword : indexer.getIndex().keySet()) {
+                    if (biword.contains(singleToken)) {
+                        searchResults.add(biword + ": " + Arrays.toString(indexer.getIndex().get(biword)));
+                    }
+                }
+            }
+
             return searchResults;
         } catch (IOException e) {
             e.printStackTrace();

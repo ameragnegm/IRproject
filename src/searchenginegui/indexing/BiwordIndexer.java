@@ -15,39 +15,63 @@ public class BiwordIndexer {
 
     private String datasetFolder;
     private Map<String, String[]> index;
+    private List<List<String>> processedDocuments;
+
+    public BiwordIndexer(String datasetFolder, List<List<String>> processedDocuments) {
+        this.datasetFolder = datasetFolder;
+        this.index = new HashMap<>();
+        this.processedDocuments = processedDocuments;
+
+    }
 
     public BiwordIndexer(String datasetFolder) {
         this.datasetFolder = datasetFolder;
         this.index = new HashMap<>();
+
     }
 
-public static List<String> biwordIndexSearchPhrase(List<String> tokens) {
-    List<String> biwords = new ArrayList<>();
+    public static List<String> biwordIndexSearchPhrase(List<String> tokens) {
+        List<String> biwords = new ArrayList<>();
 
-    for (int i = 0; i < tokens.size() - 1; i++) {
-        biwords.add(tokens.get(i) + " " + tokens.get(i + 1));
-    }
-
-    return biwords;
-}
-
-    public List<String> searchInBiwordIndex(List<String> biwordTokens) {
-        BiwordIndexer indexer = new BiwordIndexer("dataset");
-        try {
-            indexer.buildIndex();
-            List<String> searchResults = new ArrayList<>();
-            for (String biword : biwordTokens) {
-                if (indexer.getIndex().containsKey(biword)) {
-                    searchResults.addAll(Arrays.asList(indexer.getIndex().get(biword)));
-                } else {
-                    searchResults.add(biword + ": not found");
-                }
-            }
-            return searchResults;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new ArrayList<>();
+        for (int i = 0; i < tokens.size() - 1; i++) {
+            biwords.add(tokens.get(i) + " " + tokens.get(i + 1));
         }
+
+        return biwords;
+    }
+
+    public List<String> searchInBiwordIndex(List<String> biwordTokens, List<List<String>> processedDocuments) {
+        Map<String, String[]> biwordIndex = buildBiwordIndex(processedDocuments);
+        List<String> searchResults = new ArrayList<>();
+
+        for (int i = 0; i < biwordTokens.size() - 1; i++) {
+            String biword = biwordTokens.get(i) + " " + biwordTokens.get(i + 1);
+            if (biwordIndex.containsKey(biword)) {
+                searchResults.addAll(Arrays.asList(biwordIndex.get(biword)));
+            } else {
+                searchResults.add(biword + ": not found");
+            }
+        }
+        return searchResults;
+    }
+
+    private Map<String, String[]> buildBiwordIndex(List<List<String>> processedDocuments) {
+        Map<String, String[]> biwordIndex = new HashMap<>();
+
+        for (List<String> document : processedDocuments) {
+            for (int i = 0; i < document.size() - 1; i++) {
+                String biword = document.get(i) + " " + document.get(i + 1);
+                if (!biwordIndex.containsKey(biword)) {
+                    biwordIndex.put(biword, new String[]{});
+                }
+                String[] documents = biwordIndex.get(biword);
+                String documentName = "Document " + (processedDocuments.indexOf(document) + 1);
+                String[] newDocuments = Arrays.copyOf(documents, documents.length + 1);
+                newDocuments[documents.length] = documentName;
+                biwordIndex.put(biword, newDocuments);
+            }
+        }
+        return biwordIndex;
     }
 
     public void buildIndex() throws IOException {

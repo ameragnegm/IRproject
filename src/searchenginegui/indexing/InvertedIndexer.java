@@ -14,10 +14,18 @@ public class InvertedIndexer {
 
     private String datasetFolder;
     private Map<String, String[]> index;
+    private List<List<String>> processedDocuments;
 
     public InvertedIndexer(String datasetFolder) {
         this.datasetFolder = datasetFolder;
         this.index = new HashMap<>();
+    }
+
+    public InvertedIndexer(String datasetFolder, List<List<String>> processedDocuments) {
+        this.datasetFolder = datasetFolder;
+        this.index = new HashMap<>();
+        this.processedDocuments = processedDocuments;
+
     }
 
     public List<String> searchInInvertedIndex(List<String> tokens) {
