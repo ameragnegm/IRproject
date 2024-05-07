@@ -21,30 +21,33 @@ public class BiwordIndexer {
         this.index = new HashMap<>();
     }
 
-    public static String biwordIndexSearchPhrase(String searchPhrase) {
-        List<String> tokens = Tokenization.tokenizeDocument(searchPhrase);
-        List<String> biwords = new ArrayList<>();
+public static List<String> biwordIndexSearchPhrase(List<String> tokens) {
+    List<String> biwords = new ArrayList<>();
 
-        for (int i = 0; i < tokens.size() - 1; i++) {
-            biwords.add(tokens.get(i) + " " + tokens.get(i + 1));
-        }
-
-        StringBuilder biwordSearchPhrase = new StringBuilder();
-        for (String biword : biwords) {
-            biwordSearchPhrase.append(biword).append(" ");
-        }
-
-        return biwordSearchPhrase.toString().trim();
+    for (int i = 0; i < tokens.size() - 1; i++) {
+        biwords.add(tokens.get(i) + " " + tokens.get(i + 1));
     }
-    public List<String> searchInBiwordIndex(List<String> tokens) {
-        List<String> searchResults = new ArrayList<>();
-        for (int i = 0; i < tokens.size() - 1; i++) {
-            String biword = tokens.get(i) + " " + tokens.get(i + 1);
-            if (index.containsKey(biword)) {
-                searchResults.addAll(Arrays.asList(index.get(biword)));
+
+    return biwords;
+}
+
+    public List<String> searchInBiwordIndex(List<String> biwordTokens) {
+        BiwordIndexer indexer = new BiwordIndexer("dataset");
+        try {
+            indexer.buildIndex();
+            List<String> searchResults = new ArrayList<>();
+            for (String biword : biwordTokens) {
+                if (indexer.getIndex().containsKey(biword)) {
+                    searchResults.addAll(Arrays.asList(indexer.getIndex().get(biword)));
+                } else {
+                    searchResults.add(biword + ": not found");
+                }
             }
+            return searchResults;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
         }
-        return searchResults;
     }
 
     public void buildIndex() throws IOException {

@@ -1,4 +1,5 @@
 package searchenginegui;
+
 import searchenginegui.indexing.*;
 import javax.swing.*;
 import java.awt.*;
@@ -72,45 +73,56 @@ public class Searcher extends JFrame implements ActionListener {
 
         // Apply selected preprocessing options in the specified order
         List<String> processedTokens = new ArrayList<>(tokensAfterTokenization);
-        for (String phase : preprocessingOptions) {
-            switch (phase) {
-                case "Stop Words":
+        for (String phase : Arrays.asList("Stop Words", "Stemming", "Normalization", "Lemmatization")) {
+            if (preprocessingOptions.contains(phase)) {
+                if (phase.equals("Stop Words")) {
                     processedTokens = Stopwords.removeStopWords(processedTokens);
                     searchResults.append("Preprocessing Phase: Stopwords\n");
                     searchResults.append("Tokens after Stopword Removal: ").append(processedTokens).append("\n\n");
-                    break;
-                case "Stemming":
+                } else if (phase.equals("Stemming")) {
                     processedTokens = Stemming.stemDocument(processedTokens);
                     searchResults.append("Preprocessing Phase: Stemming\n");
                     searchResults.append("Tokens after Stemming: ").append(processedTokens).append("\n\n");
-                    break;
-                case "Normalization":
+                } else if (phase.equals("Normalization")) {
                     processedTokens = Normalization.normalizeTokens(processedTokens);
                     searchResults.append("Preprocessing Phase: Normalization\n");
                     searchResults.append("Tokens after Normalization: ").append(processedTokens).append("\n\n");
-                    break;
-                case "Lemmatization":
+                } else if (phase.equals("Lemmatization")) {
                     processedTokens = Lemmatization.lemmatizeTokens(processedTokens);
                     searchResults.append("Preprocessing Phase: Lemmatization\n");
                     searchResults.append("Tokens after Lemmatization: ").append(processedTokens).append("\n\n");
-                    break;
+                }
             }
         }
-
-        searchResults.append("Search results for: ").append(processedTokens).append("\n");
-
-        // Search in the specified index type and display results
-        List<String> searchInIndexResults;
+// Collect tokens into biwords if the index type is "Biword Index"
         if (indexType.equalsIgnoreCase("Biword Index")) {
-            searchPhrase = BiwordIndexer.biwordIndexSearchPhrase(processedTokens);
-            searchInIndexResults = searchInIndex(indexType, Tokenization.tokenizeDocument(searchPhrase));
-        } else {
-            searchInIndexResults = searchInIndex(indexType, processedTokens);
-        }
-        searchResults.append(formatSearchResults(searchInIndexResults)).append("\n");
+            List<String> biwordTokens = BiwordIndexer.biwordIndexSearchPhrase(processedTokens);
+            searchResults.append("Biword Tokens: ").append(biwordTokens).append("\n\n");
 
-        // Set the search results in the text area
-        searchOutputTextArea.setText(searchResults.toString());
+            // Create an instance of BiwordIndexer
+            BiwordIndexer indexer = new BiwordIndexer("dataset");
+            try {
+                indexer.buildIndex();
+
+                // Search in the specified index type and display results using the instance
+                List<String> searchInIndexResults = indexer.searchInBiwordIndex(biwordTokens);
+                searchResults.append(formatSearchResults(searchInIndexResults)).append("\n");
+
+                // Set the search results in the text area
+                searchOutputTextArea.setText(searchResults.toString());
+            } catch (IOException e) {
+                e.printStackTrace();
+                // Handle the exception as needed
+            }
+        } else {
+            // Search in other index types
+            List<String> searchInIndexResults = searchInIndex(indexType, processedTokens);
+            searchResults.append("Search results for: ").append(tokensAfterTokenization).append("\n");
+            searchResults.append(formatSearchResults(searchInIndexResults)).append("\n");
+
+            // Set the search results in the text area
+            searchOutputTextArea.setText(searchResults.toString());
+        }
     }
 
     private List<String> searchInIndex(String indexType, List<String> tokens) {
@@ -129,6 +141,7 @@ public class Searcher extends JFrame implements ActionListener {
         }
     }
 
+    // Methods for searching in different index types
     private List<String> searchInTermDocumentIndex(List<String> tokens) {
         TermDocumentMatrixIndexer indexer = new TermDocumentMatrixIndexer("dataset");
         indexer.buildIndex();
