@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import preprocessing.*;
 
 public class Searcher extends JFrame implements ActionListener {
@@ -127,21 +130,42 @@ public class Searcher extends JFrame implements ActionListener {
     }
 
     // Methods for searching in different index types
-    private List<String> searchInTermDocumentIndex(List<String> tokens) {
-        TermDocumentMatrixIndexer indexer = new TermDocumentMatrixIndexer("dataset");
-        indexer.buildIndex();
-        List<String> searchResults = new ArrayList<>();
-        for (String token : tokens) {
-            // Convert the token to lowercase for case-insensitive comparison
-            String lowercaseToken = token.toLowerCase();
-            if (indexer.getIndex().containsKey(lowercaseToken)) {
-                searchResults.add(token + ": " + indexer.getIndex().get(lowercaseToken));
+private List<String> searchInTermDocumentIndex(List<String> tokens) {
+    TermDocumentMatrixIndexer indexer = new TermDocumentMatrixIndexer("dataset");
+    indexer.buildIndex();
+    List<String> searchResults = new ArrayList<>();
+
+    // Retrieve the document IDs from the index
+    Set<String> documentIds = indexer.getIndex().values()
+            .stream()
+            .flatMap(map -> map.keySet().stream())
+            .collect(Collectors.toSet());
+
+    // Build the header row for the table
+    StringBuilder headerBuilder = new StringBuilder("|   Term   |");
+    for (String docId : documentIds) {
+        headerBuilder.append(" ").append(docId).append(" |");
+    }
+    searchResults.add(headerBuilder.toString());
+
+    // Build rows for each token
+    for (String token : tokens) {
+        // Convert the token to lowercase for case-insensitive comparison
+        String lowercaseToken = token.toLowerCase();
+        // Create a row for the token and its presence in each document
+        StringBuilder rowBuilder = new StringBuilder("|  " + token + "  |");
+        for (String docId : documentIds) {
+            if (indexer.getIndex().containsKey(lowercaseToken) && indexer.getIndex().get(lowercaseToken).containsKey(docId)) {
+                rowBuilder.append("   1   |");
             } else {
-                searchResults.add(token + ": not found");
+                rowBuilder.append("   0   |");
             }
         }
-        return searchResults;
+        searchResults.add(rowBuilder.toString());
     }
+    return searchResults;
+}
+
 
     private List<String> searchInInvertedIndex(List<String> tokens) {
         InvertedIndexer indexer = new InvertedIndexer("dataset");
